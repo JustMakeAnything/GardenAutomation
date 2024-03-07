@@ -79,7 +79,7 @@ Disadvantages:
 
 So it looks like the disadvantages are not worth to follow this except where it is not avoidable.
 
-## Use the needed power and distribute it
+## Create the needed power and distribute it
 
 Transform the voltage down to the needed and use this to distribute the power
 
@@ -96,7 +96,7 @@ Disadvantages:
 
 ## Use a medium voltage (12v-20v)
 
-Another aproach is to use a medium voltage. Old laptop power supplys have often about 20v and can be reused. This voltage is distributed and transformed to the needed voltage at the target location with a step down module.
+Another aproach is to use a medium voltage. By the way up to 48V it is considered as safe to touch. Old laptop power supplys have often about 20v and can be reused. This voltage is distributed and transformed to the needed voltage at the target location with a step down module.
 
 Advantages:
 
