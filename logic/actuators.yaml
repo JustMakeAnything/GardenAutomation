@@ -1,14 +1,14 @@
 switch:
   - platform: gpio
     pin: D1
-    name: "USB"
-    id: usb
+    name: "Solar pump"
+    id: solarpump
     restore_mode: ALWAYS_OFF
 
   - platform: gpio
     pin: D2
-    name: "BufferPump"
-    id: pufferpumpe
+    name: "Buffer pump"
+    id: bufferpump
     restore_mode: ALWAYS_OFF
 
   - platform: gpio

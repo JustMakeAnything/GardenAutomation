@@ -34,7 +34,7 @@ interval:
           id(air_min) = id(air_min) + 0.1;
 
   # EC Measurement for nutrition every 5 minutes
-  - interval: 13s
+  - interval: 300s
     then:
       - switch.turn_on: ecPower
       - delay: 800ms
@@ -82,18 +82,38 @@ interval:
           id: "air_min"
           value: !lambda return moving_min(id(air).state,id(air_min));
 
-# Individual sensors
+  # Update the pumps
+  - interval: 20s
+    then:
+      - lambda: |-  
+          updatepumps();
+
+# Individual sensors 
+
+# for grafana output
 sensor:
   - platform: template
-    name: "pumpt"
+    name: "pumping solar"
     accuracy_decimals: 0
     lambda: |- 
-      if(id(usb).state){
+      if(id(solarpump).state){
         return 1;
       }else{
         return 0;
       }
 
+  - platform: template
+    name: "pumping buffer"
+    accuracy_decimals: 0
+    lambda: |- 
+      if(id(bufferpump).state){
+        return 1;
+      }else{
+        return 0;
+      }
+
+
+  ## TODO: use interval or anything else. Unclear where this is called
   # bootcount to avoid sending initial data
   - platform: template
     name: "bootcount"

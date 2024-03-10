@@ -1,6 +1,12 @@
 const float targetTemp = 22.0;
+const float tendencetreshold = 0.05;
+// Start and stop values for cooling and heating, to avoid too much on and off
+const float coolstart = 2.5;
+const float coolstop =  1.0;
+const float heatstart = 1.4;
+const float heatstop =  0.6;
 
-float fertilizer(float &x) {
+float fertilizer(float x) {
     float R1 = 400;
     float Vin = 3.3;
     float K = 1.3;
@@ -10,6 +16,17 @@ float fertilizer(float &x) {
     float EC = 1000/(Rc*K);
     float EC25 =  EC/(1+  0.019*((id(water).state-25)));
     return EC25*1000;
+/*
+    35  1,00
+    80  1,00 
+   510  0,85
+   600  0,805
+   660  0,81
+   800  0,777
+  1054  0,77
+  1124  0,75
+  6000  0,63
+*/
 }
 
 float calctendence(float tempIn, int maxval) {
@@ -58,58 +75,85 @@ float moving_max(float current, float max) {
     }
 }
 
-void turn_on() {
-    id(usb).turn_on();
+void turnSolarOn() {
+    id(solarpump).turn_on();
 }
+void turnSolarOff() {
+    id(solarpump).turn_off();
+};
+void turnBufferOn() {
+    id(bufferpump).turn_on();
+}
+void turnBufferOff() {
+    id(bufferpump).turn_off();
+};
 
-void wateraction() {
-float tendencetreshold = 0.05;
-    if(id(bootcount).state<2){
+void updatepumps() {
+    if (id(bootcount).state < 2) {
         // No decision before all data is in (after 2 times booting)
         return;
     }
     float tendence = id(tendenceclimate).state;
     float watert   = id(water).state;
+    float buffert  = id(buffer).state;
     float solart   = id(solar).state;
 
-    auto turnOn = [](){
-        id(usb).turn_on();
-    };
-    auto turnOff = [](){
-        id(usb).turn_off();
-    };
-
     if (abs(tendence) < tendencetreshold) {
-        // No need to do anything. Turn off the pump
-        ESP_LOGI("climate", "Nothing to do: water: %f",watert);
-        turnOff();
-    }else{
-        if(tendence >0){
+        // target reached. Turn off the pump
+        ESP_LOGI("climate", "target temperature reached: water: %f", watert);
+        turnSolarOff();
+    } else {
+        if (tendence > 0) {
             // Cooling
-            ESP_LOGI("climate", "Cooling needed: water: %f",watert);
+            ESP_LOGI("climate", "Cooling needed: water: %f", watert);
             // Can I start cooling?
-            if(watert > (solart+2.5f)) {
-            ESP_LOGI("climate", "cooling" );
-            turnOn();
+            if (watert > (solart+coolstart)) {
+                ESP_LOGI("climate", "cooling");
+                turnSolarOn();
             }
             // Do I need to stop cooling?
-            if(watert < (solart+1.0f)) {
-            ESP_LOGI("climate", "no cooling: solar %f to high",watert - solart -1 );
-            turnOff();
+            if (watert < (solart+coolstop)) {
+                ESP_LOGI("climate", "no cooling: solar %f to high", watert - solart -1);
+                turnSolarOff();
             }
-        }else{
+            // Similar for the buffer
+            // Can the buffer be cooled? Use the double treshold,
+            // since temperature transfer to buffer is not as effective
+            if (buffert > (watert + coolstart * 2)) {
+                ESP_LOGI("climate", "cooling buffer");
+                turnBufferOn();
+            }
+            // Do I need to stop cooling?
+            if (buffert < (watert + coolstop * 2)) {
+                turnBufferOff();
+            }
+
+        } else {
             // Heating
-            ESP_LOGI("climate", "Heating needed: water: %f",watert);
+            ESP_LOGI("climate", "Heating needed: water: %f", watert);
             // Can I start heating?
-            if(watert < (solart-1.4f)) {
-            ESP_LOGI("climate", "heating" );
-            turnOn();
+            if (watert < (solart - heatstart)) {
+                ESP_LOGI("climate", "heating");
+                turnSolarOn();
             }
             // Do I need to stop heating?
-            if(watert > (solart-0.6f)) {
-            ESP_LOGI("climate", "no heating: solar %f to low",solart - 1 - watert );
-            turnOff();
+            if (watert > (solart - heatstop)) {
+                ESP_LOGI("climate", "no heating: solar %f to low", solart - 1 - watert);
+                turnSolarOff();
+            }
+            // Similar for the buffer
+            // Can the buffer be heated? Use the double treshold,
+            // since temperature transfer to buffer is not as effective
+            // maybe not needed since both values change
+            if (buffert < (watert - heatstart * 2)) {
+                ESP_LOGI("climate", "heating buffer");
+                turnBufferOn();
+            }
+            // Do I need to stop heating
+            if (buffert > (watert - heatstop * 2)) {
+                turnBufferOff();
             }
         }
+
     }
 }
