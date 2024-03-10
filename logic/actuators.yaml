@@ -12,6 +12,12 @@ switch:
     restore_mode: ALWAYS_OFF
 
   - platform: gpio
+    pin: D6
+    name: "Air pump"
+    id: airpump
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
     pin: D5
     name: "EC Power"
     id: ecPower

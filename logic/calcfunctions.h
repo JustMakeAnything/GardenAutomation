@@ -132,7 +132,7 @@ void updatepumps() {
             // These values are only reached when water temperature rised extremly(heatstart*2)
             // and cooling is urgent (tendencebuffertreshold)
             // It will happen in summer when day and night temperatures differ much.
-            if ((buffert < (watert - coolstart * 2))&& (abs(tendence) > tendencebuffertreshold)) {
+            if ((buffert < (watert - coolstart * 2)) && (abs(tendence) > tendencebuffertreshold)) {
                 turnBufferOn();
             }
 
@@ -164,10 +164,9 @@ void updatepumps() {
             // The buffer can also be used to heat the water
             // These values are only reached when water temperature dropped extremly(heatstart*2)
             //  and heating is urgent (tendencebuffertreshold)
-            if ((buffert > (watert + heatstart * 2))&& (abs(tendence) > tendencebuffertreshold)) {
+            if ((buffert > (watert + heatstart * 2)) && (abs(tendence) > tendencebuffertreshold)) {
                 turnBufferOn();
             }
         }
-
     }
 }

@@ -44,7 +44,7 @@ wifi:
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "temptest Fallback Hotspot"
+    ssid: "Hydroponics2024 Fallback Hotspot"
     password: !secret fallbackpass
 
 captive_portal:

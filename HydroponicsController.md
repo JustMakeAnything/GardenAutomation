@@ -9,7 +9,7 @@ Wemos D1 mini
 EC sensor         # A0         |03       RX #   XXX in
                   # D0 Wake  16|05 A SCL D1 #   Heizpumpe   I2C
 EC Power          # D5 All S 14|04 A SDA D2 #   Pufferpumpe I2C
-airpumpe (1)     # D6 All P 12|00   Out D3 #   Flash
+airpumpe (1)      # D6 All P 12|00   Out D3 #   Flash
 Dallas Temp       # D7 All I 13|02   Out D4 #   XXX boot
 XXX boot          # D8 All " 15|        GND #
                   # 3.3V       |         5V #
