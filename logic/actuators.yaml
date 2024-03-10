@@ -1,0 +1,19 @@
+switch:
+  - platform: gpio
+    pin: D1
+    name: "USB"
+    id: usb
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin: D2
+    name: "BufferPump"
+    id: pufferpumpe
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin: D5
+    name: "EC Power"
+    id: ecPower
+    restore_mode: ALWAYS_OFF
+

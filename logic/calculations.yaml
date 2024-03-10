@@ -1,0 +1,266 @@
+substitutions:
+  targetTemp: "22.0f"
+
+preferences:
+  flash_write_interval: 4min
+
+globals: 
+  - id: day_min
+    type: float
+    restore_value: true
+    initial_value: '25'
+  - id: day_max
+    type: float
+    restore_value: true
+    initial_value: '20'
+  - id: luft_min
+    type: float
+    restore_value: true
+    initial_value: '25'
+  - id: luft_max
+    type: float
+    restore_value: true
+    initial_value: '20'    
+   
+interval:
+  # adjust old min and max values 0.05°C per hour (1.2°C per day)
+  # Air temperature the double value (2.4° per day)
+  - interval: 1h
+    then:
+      - lambda: |-
+          id(day_max) = id(day_max) - 0.05;
+          id(day_min) = id(day_min) + 0.05;
+          id(luft_max) = id(luft_max) - 0.1;
+          id(luft_min) = id(luft_min) + 0.1;
+
+  # EC Measurement for nutrition every 5 minutes
+  - interval: 300s
+    then:
+      - switch.turn_on: ecPower
+      - delay: 800ms
+      - component.update: ecSensor
+      - switch.turn_off: ecPower
+      
+  - interval: 60s
+    then:
+      - mqtt.publish:
+          topic: hydroponics/alive
+          payload: "alive"
+      - mqtt.publish:
+          topic: hydroponics/sensor/daymin
+          payload: !lambda |-
+            return std::to_string(id(day_min));
+      - mqtt.publish:
+          topic: hydroponics/sensor/daymax
+          payload: !lambda |-
+            return std::to_string(id(day_max));
+      - mqtt.publish:
+          topic: hydroponics/sensor/luftmin
+          payload: !lambda |-
+            return std::to_string(id(luft_min));
+      - mqtt.publish:
+          topic: hydroponics/sensor/luftmax
+          payload: !lambda |-
+            return std::to_string(id(luft_max));
+
+  # Adjust the daymax, daymin, but not instantly
+  - interval: 60s
+    then:
+      - globals.set:
+          id: "day_max"
+          value: !lambda |-
+            if(id(wasser).state > id(day_max)){
+              return (float)(id(day_max)+ 0.005f); //must also add regular subtract 0.05/60=0.00083
+            }else{
+              return (float)id(day_max);
+            }
+
+      - globals.set:
+          id: "day_min"
+          value: !lambda |-
+            if(id(wasser).state < id(day_min)){
+              // Only slow moves to avoid extrema and have more like an integral
+              return (float)(id(day_min)- 0.005f); //must also subtract regular add
+            }else{
+              return (float)id(day_min);
+            }
+
+      - globals.set:
+          id: "luft_max"
+          value: !lambda |-
+            if(id(luft).state > id(luft_max)){
+              return (float)(id(luft_max)+ 0.005f); //including 1h interval add
+            }else{
+              return id(luft_max);
+            }
+
+      - globals.set:
+          id: "luft_min"
+          value: !lambda |-
+            if(id(luft).state < id(luft_min)){
+              return (float)(id(luft_min)- 0.005f); //including 1h interval add
+            }else{
+              return id(luft_min);
+            }
+
+
+# Individual sensors
+sensor:
+  - platform: template
+    name: "pumpt"
+    accuracy_decimals: 0
+    lambda: |- 
+      if(id(usb).state){
+        return 1;
+      }else{
+        return 0;
+      }
+
+  - platform: template
+    name: "bootcount"
+    id: bootcount
+    accuracy_decimals: 0
+    lambda: |-
+      if(isnan(id(bootcount).state)){
+        return 0;
+      }
+      return id(bootcount).state + 1;
+
+  # - platform: template
+  #   name: "stunden"
+  #   id: stunden
+  #   accuracy_decimals: 0
+  #   lambda: |-
+  #     auto time = id(sntp_time).now();
+  #     return time.hour;
+
+  # - platform: template
+  #   name: "minuten"
+  #   id: minuten
+  #   accuracy_decimals: 0
+  #   lambda: |-
+  #     auto time = id(sntp_time).now();
+  #     return time.minute;
+
+
+  - platform: template
+    name: "Tendenz wasser"
+    id: tendencewater
+    accuracy_decimals: 2
+    lambda: |-
+      float wasserstate =  id(wasser).state - ${targetTemp};
+      if( wasserstate >8){
+        return 10.0f;
+      }
+      if( wasserstate <-8){
+        return -10.0f;
+      }
+      return tan(wasserstate / (8.0f) );
+
+  - platform: template
+    name: "Tendenz max"
+    id: tendencemax
+    accuracy_decimals: 2
+    lambda: |-
+      float daymax =  id(day_max) - ${targetTemp};
+      if(daymax>8){
+        return 10.0f;
+      }    
+      if(( daymax )<-8){
+        return -10.0f;
+      }    
+      return tan(daymax / (8.0f));
+
+  - platform: template
+    name: "Tendenz min"
+    id: tendencemin
+    accuracy_decimals: 2
+    lambda: |-
+      float daymin =  id(day_min) - ${targetTemp};
+      if(( daymin )<-8){
+        return -10.0f;
+      }    
+      if(( daymin )> 8){
+        return  10.0f;
+      }    
+      return tan(daymin / (8.0f));
+
+  - platform: template
+    name: "Tendenz Luft"
+    id: tendenceair
+    accuracy_decimals: 2
+    lambda: |-
+      // Luft has a higher temperature margin of +/-12° instead of 8°
+      float luftdifference = id(luft).state - ${targetTemp};
+      if( luftdifference>12){
+        return 10.0f;
+      }
+      if( luftdifference<-12){
+        return -10.0f;
+      }      
+      return tan( luftdifference / (12.0f));
+
+  - platform: template
+    name: "Tendenz Luft Median"
+    id: tendenceairmedian
+    accuracy_decimals: 2
+    lambda: |-
+      // Luft has a higher temperature margin of +/-12° instead of 8°
+      float luftdifference = ( (id(luft_min) + id(luft_max)) / 2.0f ) - ${targetTemp};
+      if( luftdifference>12){
+        return 10.0f;
+      }
+      if( luftdifference<-12){
+        return -10.0f;
+      }
+      return tan( luftdifference / 12.0f );
+
+  - platform: template
+    name: "Tendenz Zeit"
+    id: tendencetime
+    accuracy_decimals: 2
+    lambda: |-
+      // Create bumps on the evening and morning to anticipate
+      // The change from night to day and back
+      // heat in the evening (15-18), cool in the morning (6-9)
+      auto time = id(sntp_time).now();
+      float dayminutes = ( time.hour * 60 ) + time.minute;
+      int hour = time.hour; 
+      if(hour >=6 && hour <10){
+        // Use the coolness of the morning to prepare for the day
+        return sin((dayminutes-(6.f*60.f))/76.4f);        // 240 / 76.4 = PI
+      }
+      if(hour>=16 && hour <19){
+        // Use the warmth of the evening to prepare for the night
+        return sin((dayminutes-(16.0f*60.0f))/57.3f) * -1.0f;  //180 / 57.3 = PI
+      }
+      return 0;
+
+  - platform: template
+    name: "Tendenz Klima"
+    id: tendenceclimate
+    accuracy_decimals: 2
+    filters:
+    - filter_out: nan
+    lambda: |-
+      // Sum of weighting factors must be 1
+      return id(tendencewater).state     * 0.4   +
+             id(tendenceair).state       * 0.1   +
+             id(tendenceairmedian).state * 0.2   +
+             id(tendencemin).state       * 0.15  +
+             id(tendencemax).state       * 0.15  +
+             // Time comes on top... (how much?)
+             id(tendencetime).state      * 0.2;
+
+# MQTT
+mqtt:
+  broker: !secret mqtt_broker
+  discovery: false
+  
+  birth_message:
+    topic: myavailability/topic
+    payload: online
+  will_message:
+    topic: myavailability/topic
+    payload: offline
+
