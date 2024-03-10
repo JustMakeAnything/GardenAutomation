@@ -1,5 +1,6 @@
 const float targetTemp = 22.0;
 const float tendencetreshold = 0.05;
+const float tendencebuffertreshold = 0.25;
 // Start and stop values for cooling and heating, to avoid too much on and off
 const float coolstart = 2.5;
 const float coolstop =  1.0;
@@ -123,9 +124,16 @@ void updatepumps() {
                 ESP_LOGI("climate", "cooling buffer");
                 turnBufferOn();
             }
-            // Do I need to stop cooling?
+            // Do I need to stop cooling the buffer?
             if (buffert < (watert + coolstop * 2)) {
                 turnBufferOff();
+            }
+            // The buffer can also be used to cool the water
+            // These values are only reached when water temperature rised extremly(heatstart*2)
+            // and cooling is urgent (tendencebuffertreshold)
+            // It will happen in summer when day and night temperatures differ much.
+            if ((buffert < (watert - coolstart * 2))&& (abs(tendence) > tendencebuffertreshold)) {
+                turnBufferOn();
             }
 
         } else {
@@ -149,9 +157,15 @@ void updatepumps() {
                 ESP_LOGI("climate", "heating buffer");
                 turnBufferOn();
             }
-            // Do I need to stop heating
+            // Do I need to stop heating the buffer
             if (buffert > (watert - heatstop * 2)) {
                 turnBufferOff();
+            }
+            // The buffer can also be used to heat the water
+            // These values are only reached when water temperature dropped extremly(heatstart*2)
+            //  and heating is urgent (tendencebuffertreshold)
+            if ((buffert > (watert + heatstart * 2))&& (abs(tendence) > tendencebuffertreshold)) {
+                turnBufferOn();
             }
         }
 

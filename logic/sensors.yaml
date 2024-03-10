@@ -3,20 +3,20 @@ dallas:
     update_interval: 30s
 
 sensor:
-  # Red
+  # Blue
   - platform: dallas
     name: "Air temperature"
     id: air
-    address:  0x1b7a2d1e1e64ff28
+    address:  0xb848311e1e64ff28
     resolution: 10
     filters:
     - filter_out: nan
 
-  # Blue
+  # Red
   - platform: dallas
     name: "Water temperature"
     id: water
-    address:  0xb848311e1e64ff28
+    address:  0x1b7a2d1e1e64ff28
     resolution: 10
     filters:
     - filter_out: nan

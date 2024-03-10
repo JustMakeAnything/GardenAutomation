@@ -44,22 +44,22 @@ interval:
   - interval: 60s
     then:
       - mqtt.publish:
-          topic: hydroponics/alive
+          topic: hydroponics2024/alive
           payload: "alive"
       - mqtt.publish:
-          topic: hydroponics/sensor/daymin
+          topic: hydroponics2024/sensor/daymin
           payload: !lambda |-
             return std::to_string(id(day_min));
       - mqtt.publish:
-          topic: hydroponics/sensor/daymax
+          topic: hydroponics2024/sensor/daymax
           payload: !lambda |-
             return std::to_string(id(day_max));
       - mqtt.publish:
-          topic: hydroponics/sensor/airmin
+          topic: hydroponics2024/sensor/airmin
           payload: !lambda |-
             return std::to_string(id(air_min));
       - mqtt.publish:
-          topic: hydroponics/sensor/airmax
+          topic: hydroponics2024/sensor/airmax
           payload: !lambda |-
             return std::to_string(id(air_max));
 
@@ -154,7 +154,7 @@ sensor:
     name: "Tendenz air Median"
     id: tendenceairmedian
     accuracy_decimals: 2
-    lambda: return calctendence(id(air_min)+id(air_max),12.0f);
+    lambda: return calctendence((id(air_min)+id(air_max))/2.0f,12.0f);
 
 
   - platform: template
