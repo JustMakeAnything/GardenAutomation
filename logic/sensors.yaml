@@ -1,51 +1,68 @@
 dallas:
   - pin: D7
-    update_interval: 1500ms
+    update_interval: 30s
 
 sensor:
+  # Red
   - platform: dallas
-    name: "Red temperature"
+    name: "Air temperature"
+    id: luft
     address:  0x1b7a2d1e1e64ff28
     resolution: 10
+    filters:
+    - filter_out: nan
 
+  # Blue
   - platform: dallas
-    name: "Blue temperature"
+    name: "Water temperature"
+    id: water
     address:  0xb848311e1e64ff28
     resolution: 10
+    filters:
+    - filter_out: nan
 
+  # yellow
   - platform: dallas
-    name: "Yellow temperature"
+    name: "Buffer water temperature"
+    id: buffer
     address:  0xa7383b1e1e64ff28
     resolution: 10
+    filters:
+    - filter_out: nan
 
+  # Black
   - platform: dallas
-    name: "solar temperature"
+    name: "Solar temperature"
+    id: solar
     address:  0x4800000696733828
     resolution: 10
+    filters:
+    - filter_out: nan
 
 
-  # - platform: adc
-  #   pin: A0
-  #   name: "EC Sensor"
-  #   id: ecSensor
-  #   accuracy_decimals: 3
-  #   # Updates are controlled by an interval which controls
-  #   # The power supply as well
-  #   update_interval: never
-  #   filters:
-  #     - exponential_moving_average:
-  #         alpha: 0.02
-  #         send_every: 1
-  #     - lambda: |-
-  #         float R1 = 400;
-  #         float Vin = 3.3;
-  #         float K=1.3;
-  #         //
-  #         float Vdrop= Vin*x;
-  #         float Rc=(Vdrop*R1)/(Vin-Vdrop);
-  #         float EC= 1000/(Rc*K);      
-  #         float EC25 =  EC/(1+  0.019*((id(wasser).state-25)));
-  #         return EC25*1000;
+  - platform: adc
+    pin: A0
+    name: "EC Sensor"
+    id: ecSensor
+    accuracy_decimals: 3
+    # Updates are controlled by an interval which controls
+    # The power supply as well
+    update_interval: never
+    filters:
+      - exponential_moving_average:
+          alpha: 0.02
+          send_every: 1
+      - lambda: "return fertilizer(x);"
+      # - lambda: |-
+      #     float R1 = 400;
+      #     float Vin = 3.3;
+      #     float K=1.3;
+      #     //
+      #     float Vdrop= Vin*x;
+      #     float Rc=(Vdrop*R1)/(Vin-Vdrop);
+      #     float EC= 1000/(Rc*K);      
+      #     float EC25 =  EC/(1+  0.019*((id(water).state-25)));
+      #     return EC25*1000;
 
 #   35  1,00
 #   80  1,00 
@@ -63,58 +80,58 @@ sensor:
   #   address: 0xcbed69f61e64ff28 
   #   filters:
   #   - filter_out: nan
-  #   name: "Wassertemperatur"
-  #   id: wasser
+  #   name: "watertemperatur"
+  #   id: water
   #   on_value:
   #     then:
   #       lambda: |-
-  #         float tendencetreshold = 0.05;
-  #         if(id(bootcount).state<2){
-  #           // No decision before all data is in (after 2 times booting)
-  #           return;
-  #         }
-  #         float tendence = id(tendenceclimate).state;
-  #         float wassert = id(wasser).state;
-  #         float solart  = id(solar).state;
-  #         auto turnOn = [](){
-  #           id(usb).turn_on();
-  #         };
-  #         auto turnOff = [](){
-  #           id(usb).turn_off();
-  #         };
-  #         if(abs(tendence)<tendencetreshold) {
-  #           // No need to do anything. Turn off the pump
-  #           ESP_LOGI("climate", "Nothing to do: water: %f",wassert);
-  #           turnOff();
-  #         }else{
-  #           if(tendence >0){
-  #             // Cooling
-  #             ESP_LOGI("climate", "Cooling needed: water: %f",wassert);
-  #             // Can I start cooling?
-  #             if(wassert > (solart+2.5f)) {
-  #               ESP_LOGI("climate", "cooling" );
-  #               turnOn();
-  #             }
-  #             // Do I need to stop cooling?
-  #             if(wassert < (solart+1.0f)) {
-  #               ESP_LOGI("climate", "no cooling: solar %f to high",wassert - solart -1 );
-  #               turnOff();
-  #             }
-  #           }else{
-  #             // Heating
-  #             ESP_LOGI("climate", "Heating needed: water: %f",wassert);
-  #             // Can I start heating?
-  #             if(wassert < (solart-1.4f)) {
-  #               ESP_LOGI("climate", "heating" );
-  #               turnOn();
-  #             }
-  #             // Do I need to stop heating?
-  #             if(wassert > (solart-0.6f)) {
-  #               ESP_LOGI("climate", "no heating: solar %f to low",solart - 1 - wassert );
-  #               turnOff();
-  #             }
-  #           }
-  #         }
+          # float tendencetreshold = 0.05;
+          # if(id(bootcount).state<2){
+          #   // No decision before all data is in (after 2 times booting)
+          #   return;
+          # }
+          # float tendence = id(tendenceclimate).state;
+          # float watert = id(water).state;
+          # float solart  = id(solar).state;
+          # auto turnOn = [](){
+          #   id(usb).turn_on();
+          # };
+          # auto turnOff = [](){
+          #   id(usb).turn_off();
+          # };
+          # if(abs(tendence)<tendencetreshold) {
+          #   // No need to do anything. Turn off the pump
+          #   ESP_LOGI("climate", "Nothing to do: water: %f",watert);
+          #   turnOff();
+          # }else{
+          #   if(tendence >0){
+          #     // Cooling
+          #     ESP_LOGI("climate", "Cooling needed: water: %f",watert);
+          #     // Can I start cooling?
+          #     if(watert > (solart+2.5f)) {
+          #       ESP_LOGI("climate", "cooling" );
+          #       turnOn();
+          #     }
+          #     // Do I need to stop cooling?
+          #     if(watert < (solart+1.0f)) {
+          #       ESP_LOGI("climate", "no cooling: solar %f to high",watert - solart -1 );
+          #       turnOff();
+          #     }
+          #   }else{
+          #     // Heating
+          #     ESP_LOGI("climate", "Heating needed: water: %f",watert);
+          #     // Can I start heating?
+          #     if(watert < (solart-1.4f)) {
+          #       ESP_LOGI("climate", "heating" );
+          #       turnOn();
+          #     }
+          #     // Do I need to stop heating?
+          #     if(watert > (solart-0.6f)) {
+          #       ESP_LOGI("climate", "no heating: solar %f to low",solart - 1 - watert );
+          #       turnOff();
+          #     }
+          #   }
+          # }
 
 
   # - platform: dallas    

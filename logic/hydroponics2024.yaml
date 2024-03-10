@@ -1,32 +1,26 @@
 esphome:
-  name: temptest
+  name: hydroponics2024
+  includes: 
+    - calcfunctions.h
 
 esp8266:
   board: d1_mini
 #  restore_from_flash: true  
 
+
 packages:
   sensors: !include sensors.yaml
-  #actuators: !include actuators.yaml
-  #calculations: !include calculations.yaml
+  actuators: !include actuators.yaml
+  calculations: !include calculations.yaml
   #mqttsend: !include mqttsend.yaml
+
+
 
 mqtt:
   broker: !secret mqtt_broker
   port: 1883
   id: "mq"
  
-# manual_ip:
-#     # Set this to the IP of the ESP
-#     static_ip: 192.168.178.124
-#     # Set this to the IP address of the router. Often ends with .1
-#     gateway: 192.168.178.1
-#     # The subnet of the network. 255.255.255.0 works for most home networks.
-#     subnet: 255.255.255.0
-#     dns1 : 8.8.8.8 
-#     dns2 : 8.8.4.4
-
-
 # Enable logging
 logger:
 

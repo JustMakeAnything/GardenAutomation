@@ -34,7 +34,7 @@ interval:
           id(luft_min) = id(luft_min) + 0.1;
 
   # EC Measurement for nutrition every 5 minutes
-  - interval: 300s
+  - interval: 13s
     then:
       - switch.turn_on: ecPower
       - delay: 800ms
@@ -69,7 +69,7 @@ interval:
       - globals.set:
           id: "day_max"
           value: !lambda |-
-            if(id(wasser).state > id(day_max)){
+            if(id(water).state > id(day_max)){
               return (float)(id(day_max)+ 0.005f); //must also add regular subtract 0.05/60=0.00083
             }else{
               return (float)id(day_max);
@@ -78,7 +78,7 @@ interval:
       - globals.set:
           id: "day_min"
           value: !lambda |-
-            if(id(wasser).state < id(day_min)){
+            if(id(water).state < id(day_min)){
               // Only slow moves to avoid extrema and have more like an integral
               return (float)(id(day_min)- 0.005f); //must also subtract regular add
             }else{
@@ -144,97 +144,103 @@ sensor:
 
 
   - platform: template
-    name: "Tendenz wasser"
+    name: "Tendenz water"
     id: tendencewater
     accuracy_decimals: 2
-    lambda: |-
-      float wasserstate =  id(wasser).state - ${targetTemp};
-      if( wasserstate >8){
-        return 10.0f;
-      }
-      if( wasserstate <-8){
-        return -10.0f;
-      }
-      return tan(wasserstate / (8.0f) );
+    lambda: return calctendence((float)id(water).state,8.0f);
+    # lambda: |-
+    #   float waterstate =  id(water).state - ${targetTemp};
+    #   if( waterstate >8){
+    #     return 10.0f;
+    #   }
+    #   if( waterstate <-8){
+    #     return -10.0f;
+    #   }
+    #   return tan(waterstate / (8.0f) );
 
   - platform: template
     name: "Tendenz max"
     id: tendencemax
     accuracy_decimals: 2
-    lambda: |-
-      float daymax =  id(day_max) - ${targetTemp};
-      if(daymax>8){
-        return 10.0f;
-      }    
-      if(( daymax )<-8){
-        return -10.0f;
-      }    
-      return tan(daymax / (8.0f));
+    lambda: return calctendence((float)id(day_max),8.0f);
+    # lambda: |-
+    #   float daymax =  id(day_max) - ${targetTemp};
+    #   if(daymax>8){
+    #     return 10.0f;
+    #   }    
+    #   if(( daymax )<-8){
+    #     return -10.0f;
+    #   }    
+    #   return tan(daymax / (8.0f));
 
   - platform: template
     name: "Tendenz min"
     id: tendencemin
     accuracy_decimals: 2
-    lambda: |-
-      float daymin =  id(day_min) - ${targetTemp};
-      if(( daymin )<-8){
-        return -10.0f;
-      }    
-      if(( daymin )> 8){
-        return  10.0f;
-      }    
-      return tan(daymin / (8.0f));
+    lambda: return calctendence(id(day_min),8.0f);
+    # lambda: |-
+    #   float daymin =  id(day_min) - ${targetTemp};
+    #   if(( daymin )<-8){
+    #     return -10.0f;
+    #   }    
+    #   if(( daymin )> 8){
+    #     return  10.0f;
+    #   }    
+    #   return tan(daymin / (8.0f));
 
   - platform: template
     name: "Tendenz Luft"
     id: tendenceair
     accuracy_decimals: 2
-    lambda: |-
-      // Luft has a higher temperature margin of +/-12° instead of 8°
-      float luftdifference = id(luft).state - ${targetTemp};
-      if( luftdifference>12){
-        return 10.0f;
-      }
-      if( luftdifference<-12){
-        return -10.0f;
-      }      
-      return tan( luftdifference / (12.0f));
+    lambda: return calctendence(id(luft).state,12.0f);
+    # lambda: |-
+    #   // Luft has a higher temperature margin of +/-12° instead of 8°
+    #   float luftdifference = id(luft).state - ${targetTemp};
+    #   if( luftdifference>12){
+    #     return 10.0f;
+    #   }
+    #   if( luftdifference<-12){
+    #     return -10.0f;
+    #   }      
+    #   return tan( luftdifference / (12.0f));
 
   - platform: template
     name: "Tendenz Luft Median"
     id: tendenceairmedian
     accuracy_decimals: 2
-    lambda: |-
-      // Luft has a higher temperature margin of +/-12° instead of 8°
-      float luftdifference = ( (id(luft_min) + id(luft_max)) / 2.0f ) - ${targetTemp};
-      if( luftdifference>12){
-        return 10.0f;
-      }
-      if( luftdifference<-12){
-        return -10.0f;
-      }
-      return tan( luftdifference / 12.0f );
+    lambda: return calctendence(id(luft_min)+id(luft_max),12.0f);
+    # lambda: |-
+    #   // Luft has a higher temperature margin of +/-12° instead of 8°
+    #   float luftdifference = ( (id(luft_min) + id(luft_max)) / 2.0f ) - ${targetTemp};
+    #   if( luftdifference>12){
+    #     return 10.0f;
+    #   }
+    #   if( luftdifference<-12){
+    #     return -10.0f;
+    #   }
+    #   return tan( luftdifference / 12.0f );
 
   - platform: template
     name: "Tendenz Zeit"
     id: tendencetime
     accuracy_decimals: 2
-    lambda: |-
-      // Create bumps on the evening and morning to anticipate
-      // The change from night to day and back
-      // heat in the evening (15-18), cool in the morning (6-9)
-      auto time = id(sntp_time).now();
-      float dayminutes = ( time.hour * 60 ) + time.minute;
-      int hour = time.hour; 
-      if(hour >=6 && hour <10){
-        // Use the coolness of the morning to prepare for the day
-        return sin((dayminutes-(6.f*60.f))/76.4f);        // 240 / 76.4 = PI
-      }
-      if(hour>=16 && hour <19){
-        // Use the warmth of the evening to prepare for the night
-        return sin((dayminutes-(16.0f*60.0f))/57.3f) * -1.0f;  //180 / 57.3 = PI
-      }
-      return 0;
+    lambda: return calctimetendence();
+    #lambda: |-
+      # // Create bumps on the evening and morning to anticipate
+      # // The change from night to day and back
+      # // heat in the evening (15-18), cool in the morning (6-9)
+      # auto time = id(sntp_time).now();
+      # float dayminutes = ( time.hour * 60 ) + time.minute;
+      # int hour = time.hour; 
+      # if(hour >=6 && hour <10){
+      #   // Use the coolness of the morning to prepare for the day
+      #   return sin((dayminutes-(6.f*60.f))/76.4f);        // 240 / 76.4 = PI
+      # }
+      # if(hour>=16 && hour <19){
+      #   // Use the warmth of the evening to prepare for the night
+      #   return sin((dayminutes-(16.0f*60.0f))/57.3f) * -1.0f;  //180 / 57.3 = PI
+      # }
+      # return 0;
 
   - platform: template
     name: "Tendenz Klima"
@@ -263,4 +269,3 @@ mqtt:
   will_message:
     topic: myavailability/topic
     payload: offline
-
