@@ -6,7 +6,7 @@ sensor:
   # Red
   - platform: dallas
     name: "Air temperature"
-    id: luft
+    id: air
     address:  0x1b7a2d1e1e64ff28
     resolution: 10
     filters:
@@ -139,8 +139,8 @@ sensor:
   #   address: 0x9c27311e1e64ff28
   #   filters:
   #   - filter_out: nan
-  #   name: "Luft"
-  #   id: luft
+  #   name: "air"
+  #   id: air
   # - platform: dallas    
   #   resolution: 11
   #   address: 0xfc0000077235fe28

@@ -42,6 +42,22 @@ float calctimetendence() {
     return 0;
 }
 
+float moving_min(float current, float min) {
+    if (current < min) {
+        return (min - 0.005f);  // must also add regular subtract 0.05/60=0.00083
+    } else {
+        return min;
+    }
+}
+
+float moving_max(float current, float max) {
+    if (current > max) {
+        return (max + 0.005f);  // must also add regular subtract 0.05/60=0.00083
+    } else {
+        return max;
+    }
+}
+
 void turn_on() {
     id(usb).turn_on();
 }
