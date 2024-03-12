@@ -8,7 +8,7 @@ sensor:
     name: "Air temperature"
     id: air
     address:  0xb848311e1e64ff28
-    resolution: 10
+    resolution: 12
     filters:
     - filter_out: nan
 
@@ -17,7 +17,7 @@ sensor:
     name: "Water temperature"
     id: water
     address:  0x1b7a2d1e1e64ff28
-    resolution: 10
+    resolution: 12
     filters:
     - filter_out: nan
 
@@ -26,7 +26,7 @@ sensor:
     name: "Buffer water temperature"
     id: buffer
     address:  0xa7383b1e1e64ff28
-    resolution: 10
+    resolution: 12
     filters:
     - filter_out: nan
 
@@ -35,7 +35,7 @@ sensor:
     name: "Solar temperature"
     id: solar
     address:  0x4800000696733828
-    resolution: 10
+    resolution: 12
     filters:
     - filter_out: nan
 
