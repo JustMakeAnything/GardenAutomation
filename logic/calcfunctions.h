@@ -31,10 +31,17 @@ float fertilizer(float x) {
 }
 
 float calctendence(float tempIn, int maxval) {
-    float difference = tempIn - targetTemp;
-    float result = tan(difference / (maxval));
+    float difference = (tempIn - targetTemp) / maxval;
+    const float limit = 5.0f;
+    float maxtan = atan(limit);
+    if ( difference > maxtan ) {
+        difference = maxtan;
+    }
+      if ( difference < maxtan * -1 ) {
+        difference = -maxtan;
+      }
+    float result = tan(difference);
     //
-    const float limit = 10.0f;
     // Cap values to avoid overflows and problems with extremes
     if (result > limit) {
         return limit;
