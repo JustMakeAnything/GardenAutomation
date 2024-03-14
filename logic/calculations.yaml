@@ -20,7 +20,15 @@ globals:
   - id: air_max
     type: float
     restore_value: true
-    initial_value: '20'    
+    initial_value: '20'
+  - id: air_in_water
+    type: float
+    restore_value: true
+    initial_value: '50'
+  - id: air_target
+    type: float
+    initial_value: '0'
+
    
 interval:
   # adjust old min and max values 0.05°C per hour (1.2°C per day)
@@ -32,6 +40,11 @@ interval:
           id(day_min) = id(day_min) + 0.05;
           id(air_max) = id(air_max) - 0.1;
           id(air_min) = id(air_min) + 0.1;
+
+  # try to estimate the air in the water
+  - interval: 5min
+    then:
+      - lambda: calc_air_in_water();
 
   # EC Measurement for nutrition every 5 minutes
   - interval: 300s
@@ -124,6 +137,18 @@ sensor:
         return 0;
       }
       return id(bootcount).state + 1;
+
+  - platform: template
+    name: "Air in water"
+    id: air_water
+    accuracy_decimals: 2
+    lambda: return id(air_in_water);
+
+  - platform: template
+    name: "Target air in water"
+    id: target_air_water
+    accuracy_decimals: 2
+    lambda: return id(air_target);
 
   # Calculation of tendences
   - platform: template

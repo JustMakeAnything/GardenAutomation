@@ -180,3 +180,41 @@ void updatepumps() {
         }
     }
 }
+
+void turnAirPumpOn() {
+    id(airpump).turn_on();
+}
+void turnAirPumpOff() {
+    id(airpump).turn_off();
+}
+
+void calc_air_in_water() {
+    // This function is called every 5 minutes
+    // Estimate (not calculate) the air in the water and control the air pump accordingly
+    // subtract some value each 5 mins (a day has 288*5min)
+    float tendence = id(tendenceclimate).state;
+    float watert   = id(water).state;
+    float airt     = id(air).state;
+    float solart   = id(solar).state;
+
+    float airTarget = 50;
+    // Adjust the target according to the need to heat/cool and the climate conditions
+    // When the air is warmer than the water and heating is needed, increase the target
+    airTarget += (airt - watert) * tendence * -2;
+
+    id(air_target) = airTarget;
+
+    // Air in water
+    float aiw = id(air_in_water);
+    aiw -= 0.1;
+    if (id(airpump).state == true) {
+        // Pumping brings new air
+        aiw += 2.0;
+    }
+    if (aiw < airTarget) {
+        turnAirPumpOn();
+    } else {
+        turnAirPumpOff();
+    }
+    id(air_in_water) = aiw;
+}
