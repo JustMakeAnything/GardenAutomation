@@ -198,9 +198,14 @@ void calc_air_in_water() {
     float solart   = id(solar).state;
 
     float airTarget = 50;
+    if (id(bootcount).state < 4) {
+        // No decision before all data is in (after 2 times booting)
+        return;
+    }
+
     // Adjust the target according to the need to heat/cool and the climate conditions
     // When the air is warmer than the water and heating is needed, increase the target
-    airTarget += (airt - watert) * tendence * -2;
+    airTarget += (airt - watert) * tendence * 2;
 
     id(air_target) = airTarget;
 
@@ -209,7 +214,7 @@ void calc_air_in_water() {
     aiw -= 0.1;
     if (id(airpump).state == true) {
         // Pumping brings new air
-        aiw += 2.0;
+        aiw += 1.0;
     }
     if (aiw < airTarget) {
         turnAirPumpOn();
