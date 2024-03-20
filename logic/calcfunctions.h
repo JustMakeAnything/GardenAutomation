@@ -205,16 +205,17 @@ void calc_air_in_water() {
 
     // Adjust the target according to the need to heat/cool and the climate conditions
     // When the air is warmer than the water and heating is needed, increase the target
-    airTarget += (airt - watert) * tendence * 2;
+    airTarget += (airt - watert) * tendence * -0.8f;
 
     id(air_target) = airTarget;
 
     // Air in water
     float aiw = id(air_in_water);
-    aiw -= 0.1;
+    // up to 0.05 missing due to high temperature (25C°) 0.02 at 10C°
+    aiw -= 0.1f + watert/500.0f;          
     if (id(airpump).state == true) {
         // Pumping brings new air
-        aiw += 1.0;
+        aiw += 1.2; // About 1/10 of the time pumping
     }
     if (aiw < airTarget) {
         turnAirPumpOn();
