@@ -198,7 +198,7 @@ void calc_air_in_water() {
     float solart   = id(solar).state;
 
     float airTarget = 50;
-    if (id(bootcount).state < 4) {
+    if (id(bootcount).state < 3) {
         // No decision before all data is in (after 2 times booting)
         return;
     }
@@ -208,19 +208,31 @@ void calc_air_in_water() {
     airTarget += (airt - watert) * tendence * -0.8f;
 
     id(air_target) = airTarget;
+    if (isnan(airTarget)) {
+        ESP_LOGI("air target is nan ", "airt: %f", airt);
+        ESP_LOGI("air target is nan ", "watert %f", watert);
+        ESP_LOGI("air target is nan ", "tendence %f", tendence);
+
+    }
 
     // Air in water
     float aiw = id(air_in_water);
     // up to 0.05 missing due to high temperature (25C°) 0.02 at 10C°
-    aiw -= 0.1f + watert/500.0f;          
+    aiw -= 0.1f + watert/500.0f;
+    if (isnan(aiw)) {
+        ESP_LOGI("aiw is nan ", "aiw: %f", id(air_in_water));
+        ESP_LOGI("aiw is nan ", "watert %f", watert);
+        //  id(air_in_water) = 57;
+    } else {
+        id(air_in_water) = aiw;
+    }
     if (id(airpump).state == true) {
         // Pumping brings new air
-        aiw += 1.2; // About 1/10 of the time pumping
+        aiw += 1.2;  // About 1/10 of the time pumping
     }
     if (aiw < airTarget) {
         turnAirPumpOn();
     } else {
         turnAirPumpOff();
     }
-    id(air_in_water) = aiw;
 }

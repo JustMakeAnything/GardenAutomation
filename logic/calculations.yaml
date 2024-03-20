@@ -42,7 +42,7 @@ interval:
           id(air_min) = id(air_min) + 0.1;
 
   # try to estimate the air in the water
-  - interval: 5min
+  - interval: 4min
     then:
       - lambda: calc_air_in_water();
 
